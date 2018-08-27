@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ import org.apache.commons.beanutils.Converter;
 import com.itheima.domain.User;
 import com.itheima.service.UserService;
 import com.itheima.utils.CommonsUtils;
+import com.itheima.utils.MailUtils;
 
 
 
@@ -58,7 +61,8 @@ public class RegisterServlet extends HttpServlet {
 		user.setUid(CommonsUtils.getUUID());
 		user.setTelephone(null);
 		user.setState(0);
-		user.setCode(CommonsUtils.getUUID());
+		String activeCode =CommonsUtils.getUUID();
+		user.setCode(activeCode);
 		
 		//将user传递给service层
 		UserService service = new UserService();
@@ -66,6 +70,19 @@ public class RegisterServlet extends HttpServlet {
 		
 		//判断是否注册成功
 		if(isRegisterSuccess) {
+			//发送邮件
+			String emailMsg="恭喜您注册成功，请点击下面的链接进行激活"
+					+"<a href='http://localhost:8080/heimashop/active?activeCode="+activeCode+"'>"+
+					"http://localhost:8080/heimashop/active?activeCode="+activeCode+"</a>";
+			try {
+				MailUtils.sendMail(user.getEmail(), emailMsg);
+			} catch (AddressException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			response.sendRedirect(request.getContextPath()+"/registerSuccess.jsp");
 		}else {
 			response.sendRedirect(request.getContextPath()+"/registerFail.jsp");
